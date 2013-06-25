@@ -50,7 +50,7 @@ def populate_variable_array(klass, inst)
     endian :little
     send(fix(inst.size_type.name.to_s), :va_len, :value => lambda { data.length })
     array :data, { :type => fix(inst.array_type.name.to_s),
-                   :read_until => lambda { index == va_len }}
+                   :read_until => lambda { index == va_len - 1}}
   end
 end
 
