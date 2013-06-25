@@ -200,16 +200,6 @@ Encoding: int8
     thing2 = 1
     thing3 = 2
 
-Type Name: oddness
-Cauterize Class: group
-Description: a mix of weird things
-  kind tag: group_oddness_type
-  kinds:
-    a_color - payload: some_colors - description: a color
-    a_cool_int - payload: int16 - description: only cool ints fit here
-    a_thing - payload: <no payload> - description: only a thing
-    undescribed - payload: <no payload>
-
 Type Name: group_oddness_type
 Cauterize Class: enumeration
 Description: <none>
@@ -219,13 +209,13 @@ Encoding: int8
     GROUP_ODDNESS_TYPE_A_THING = 2
     GROUP_ODDNESS_TYPE_UNDESCRIBED = 3
 
-Type Name: mystery_oddness
+Type Name: oddness
 Cauterize Class: group
-Description: <none>
-  kind tag: group_mystery_oddness_type
+Description: a mix of weird things
+  kind tag: group_oddness_type
   kinds:
-    a_color - payload: some_colors
-    a_cool_int - payload: int16
+    a_color - payload: some_colors - description: a color
+    a_cool_int - payload: int16 - description: only cool ints fit here
     a_thing - payload: <no payload> - description: only a thing
     undescribed - payload: <no payload>
 
@@ -237,6 +227,16 @@ Encoding: int8
     GROUP_MYSTERY_ODDNESS_TYPE_A_COOL_INT = 1
     GROUP_MYSTERY_ODDNESS_TYPE_A_THING = 2
     GROUP_MYSTERY_ODDNESS_TYPE_UNDESCRIBED = 3
+
+Type Name: mystery_oddness
+Cauterize Class: group
+Description: <none>
+  kind tag: group_mystery_oddness_type
+  kinds:
+    a_color - payload: some_colors
+    a_cool_int - payload: int16
+    a_thing - payload: <no payload> - description: only a thing
+    undescribed - payload: <no payload>
 EOF
           @doc_text.should == t
         end

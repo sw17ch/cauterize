@@ -3,22 +3,32 @@ require 'cauterize/snake_case'
 require 'cauterize/base_type'
 require 'cauterize/cauterize'
 
+def fix(s)
+  s.gsub(/([[:alpha:]])_([[:digit:]])/) do |m|
+    $1 + $2
+  end
+end
+
+
 def populate_scalar(klass, inst)
   klass.class_eval do
-    send(:endian, :little)
-    send(inst.type_name.name.to_sym, :data)
+    endian :little
+    send(fix(inst.type_name.name.to_s), :data)
   end
 end
 
 def populate_enum(klass, inst)
   klass.class_eval do
-    send(:endian, :little)
+    endian :little
 
-    send(inst.representation.name.to_sym, :representation)
+    send(fix(inst.representation.name.to_s), :representation)
 
     enum_vals = inst.values.values.map {|v| [v.value, v.name.to_sym]}
     enum_hash = Hash[enum_vals]
     const_set(:ENUM_MAP, enum_hash)
+    inst.values.values.each do |v| 
+      klass.const_set(v.name.upcase.to_sym, v.value)
+    end
 
     def enum
       self.class.const_get(:ENUM_MAP)[representation]
@@ -28,40 +38,42 @@ end
 
 def populate_fixed_array(klass, inst)
   klass.class_eval do
-    send(:array, :data, { :type => inst.array_type.name,
-                          :initial_length => inst.array_size })
+    endian :little
+    array :data, { :type => fix(inst.array_type.name.to_s),
+                   :initial_length => inst.array_size }
   end
 end
 
 def populate_variable_array(klass, inst)
   # TODO: Figure out what we should do with inst.array_size
   klass.class_eval do
-    send(inst.size_type.name, :va_len, :value => lambda { data.length })
-    send(:array, :data, { :type => inst.array_type.name,
-                          :read_until => lambda { index == length }} )
+    endian :little
+    send(fix(inst.size_type.name.to_s), :va_len, :value => lambda { data.length })
+    array :data, { :type => fix(inst.array_type.name.to_s),
+                   :read_until => lambda { index == va_len }}
   end
 end
 
 def populate_composite(klass, inst)
   klass.class_eval do
-    send(:endian, :little)
+    endian :little
     inst.fields.values.each do |v|
-      send(v.type.name.to_s, v.name.to_s)
+      send(fix(v.type.name.to_s), v.name.to_s)
     end
   end
 end
 
 def populate_group(klass, inst)
   choices = inst.fields.values.each_with_index.map do |v, i|
-    [i, v.type.nil? ? :empty_data : v.type.name.to_s.to_sym]
+    [i, v.type.nil? ? :empty_data : fix(v.type.name.to_s).to_sym]
   end
 
   klass.class_eval do
-    send(:endian, :little)
-    send(inst.tag_enum.name.to_s, :tag)
+    endian :little
+    send(fix(inst.tag_enum.name.to_s), :tag)
 
-    send(:choice, :data, :selection => lambda { tag.representation },
-                         :choices => Hash[choices] )
+    choice :data, :selection => lambda { tag.representation },
+                  :choices => Hash[choices]
   end
 end
  
@@ -74,24 +86,24 @@ module Cauterize
     dsl_mod = Module.new do |mod|
 
       BaseType.all_instances.each do |inst|
-        next if "Cauterize::BuiltIn" == inst.class.name
+        next if Cauterize::BuiltIn == inst.class
 
         n = inst.name.to_s.camel
         module_eval("class #{n} < BinData::Record; end")
         klass = const_get(n)
 
-        case inst.class.name
-        when "Cauterize::Scalar"
+        case inst
+        when Cauterize::Scalar
           populate_scalar(klass, inst)
-        when "Cauterize::Enumeration"
+        when Cauterize::Enumeration
           populate_enum(klass, inst)
-        when "Cauterize::FixedArray"
+        when Cauterize::FixedArray
           populate_fixed_array(klass, inst)
-        when "Cauterize::VariableArray"
+        when Cauterize::VariableArray
           populate_variable_array(klass, inst)
-        when "Cauterize::Composite"
+        when Cauterize::Composite
           populate_composite(klass, inst)
-        when "Cauterize::Group"
+        when Cauterize::Group
           populate_group(klass, inst)
         else
           puts "Unhandled instance: #{inst.class.name}"
