@@ -29,6 +29,13 @@ module Cauterize
     Cauterize::CSBuilder.new(cs_file, output_prefix)
   end
 
+  # Generate the Ruby code corresponding to the generated configuration
+  def make_builder_ruby(target_dir, output_prefix)
+    rb_file = File.join(target_dir, "#{output_prefix}.rb")
+
+    Cauterize::RubyBuilder.new(rb_file, output_prefix)
+  end
+
   def make_builder_doc(target_dir, output_prefix)
     doc_file = File.join(target_dir, "#{output_prefix}.txt")
 

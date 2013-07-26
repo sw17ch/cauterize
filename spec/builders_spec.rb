@@ -5,6 +5,7 @@ module Cauterize
       before do
         class X; def initialize(i); end; end
         class Y; def initialize(i); end; end
+        class Z; def initialize(i); end; end
 
         # save the old list so that we can restore it later.
         old_builders = nil
@@ -34,6 +35,9 @@ module Cauterize
 
         Cauterize::Builders.register(:cs, Cauterize::Scalar, Y)
         Cauterize::Builders.get(:cs, s).class.should be Y
+
+        Cauterize::Builders.register(:ruby, Cauterize::Scalar, Z)
+        Cauterize::Builders.get(:ruby, s).class.should be Z
       end
 
       it "raises an error on duplicate registrations" do

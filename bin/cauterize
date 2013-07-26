@@ -30,7 +30,7 @@ class CauterizeCmdline < Thor
     end
 
     language = language.downcase
-    if %w(c cs doc).include? language
+    if %w(c cs ruby doc).include? language
       Cauterize.generate language, target_dir, desc_file
     else
       raise CmdLineException.new("Language '#{language}' is not supported.")
