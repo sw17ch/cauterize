@@ -72,7 +72,7 @@ module Cauterize
         end
 
         it "requires 'cauterize_ruby_baseclasses'" do
-          @ruby_text.should include("require 'cauterize_ruby_baseclasses'")
+          @ruby_text.should include("require_relative './cauterize_ruby_baseclasses'")
         end
 
       end
