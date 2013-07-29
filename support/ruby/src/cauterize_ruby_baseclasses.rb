@@ -1,6 +1,6 @@
 
-def takeByte!(str)
-  byte = str.slice!(0,1)
+def takeBytes!(num_bytes, str)
+  byte = str.slice!(0, num_bytes)
   raise "Unexpected end of string" if byte == ""
   byte
 end
@@ -108,6 +108,10 @@ class CauterizeComposite < CauterizeData
       [k, self.fields[k].unpack!(str)]
     end]
   end
+
+  def method_missing(m, *args, &block)
+    fields[m]
+  end
 end
 
 
@@ -161,12 +165,21 @@ class CauterizeGroup < CauterizeData
   end
 
   def pack
-    @tag.pack + @data.pack
+    if @data.nil?
+      @tag.pack
+    else
+      @tag.pack + @data.pack
+    end
   end
 
   def self.unpack!(str)
     tag = self.tag_type.unpack!(str)
-    data = self.fields[self.from_field_name(tag.field_name)].unpack!(str)
-    self.new(self.from_field_name(tag.field_name), data)
+    field_name = self.from_field_name(tag.field_name)
+    data = self.fields[field_name]
+    if data.nil?
+      self.new(field_name)
+    else
+      self.new(field_name, data.unpack!(str))
+    end
   end
 end
