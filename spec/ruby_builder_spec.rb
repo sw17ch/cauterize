@@ -62,7 +62,6 @@ module Cauterize
 
         @rb.build
         @ruby_text = File.read(@rb.rb)
-        puts @ruby_text
         @ruby_lines = @ruby_text.lines.to_a
       end
 
@@ -72,7 +71,7 @@ module Cauterize
         end
 
         it "requires 'cauterize_ruby_baseclasses'" do
-          @ruby_text.should include("require_relative './cauterize_ruby_baseclasses'")
+          @ruby_text.should include("require_relative './cauterize_ruby_builtins'")
         end
 
       end

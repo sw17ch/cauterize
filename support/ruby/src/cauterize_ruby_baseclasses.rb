@@ -114,7 +114,10 @@ end
 class CauterizeEnumeration < CauterizeData
   attr_reader :field_name
 
-  def initialize(field_name) @field_name = field_name end
+  def initialize(field_name)
+    raise "Invalid field name #{field_name}" if not self.class.fields.keys.include?(field_name)
+    @field_name = field_name
+  end
 
   def val() self.class.fields[@field_name] end
 
@@ -136,13 +139,24 @@ end
 class CauterizeGroup < CauterizeData
   attr_reader :tag
   attr_reader :data
+
+  def to_tag_name(field_name)
+    (self.class.tag_prefix + field_name.to_s).to_sym
+  end
+
+  def self.from_field_name(tag_name)
+    t = tag_name.to_s
+    t.slice!(self.tag_prefix)
+    t.to_sym
+  end
   
   def initialize(tag, data = nil)
-    @tag = self.class.tag_type.construct(tag)
-    if self.class.fields[@tag.field_name].nil?
+    @tag = self.class.tag_type.construct(to_tag_name(tag))
+    field_class = self.class.fields[self.class.from_field_name(@tag.field_name)]
+    if field_class.nil?
       @data = data
     else
-      @data = self.class.fields[@tag.field_name].construct(data)
+      @data = field_class.construct(data)
     end
   end
 
@@ -152,7 +166,7 @@ class CauterizeGroup < CauterizeData
 
   def self.unpack!(str)
     tag = self.tag_type.unpack!(str)
-    data = self.fields[tag.field_name].unpack!(str)
-    self.new(tag, data)
+    data = self.fields[self.from_field_name(tag.field_name)].unpack!(str)
+    self.new(self.from_field_name(tag.field_name), data)
   end
 end

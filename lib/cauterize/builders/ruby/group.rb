@@ -13,6 +13,7 @@ module Cauterize::Builders::Ruby
 
       f << "class #{render} < CauterizeGroup"
       f << "  def self.tag_type() #{tag} end"
+      f << "  def self.tag_prefix() '#{@blueprint.tag_enum.name.upcase}_' end"
       f << "  def self.fields"
       f << "    {"
       @blueprint.fields.values.each_with_index do |field, i|

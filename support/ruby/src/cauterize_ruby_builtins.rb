@@ -1,4 +1,4 @@
-require 'cauterize_ruby_baseclasses'
+require_relative './cauterize_ruby_baseclasses'
 
 class Uint8 < CauterizeBuiltin
   def in_range(v) v >= 0 && v < 2**8 end
