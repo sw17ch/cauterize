@@ -1,11 +1,5 @@
 require 'stringio'
 
-def takeBytes!(num_bytes, str)
-  byte = str.slice!(0, num_bytes)
-  raise "Unexpected end of string" if byte == ""
-  byte
-end
-
 class CauterizeData
   def self.construct(x)
     if x.is_a? CauterizeData
@@ -27,19 +21,42 @@ class CauterizeBuiltin < CauterizeData
     raise "Out of range value" if not in_range(val)
     @val = val
   end
-  def to_i
-    return @val.to_i
+end
+
+class CauterizeBuiltinInteger < CauterizeBuiltin
+  def initialize(val)
+    super(val.to_i)
   end
-  def to_f
-    return @val.to_f
+
+  def to_i
+    val
   end
 end
 
-class CauterizeScalar < CauterizeData
-  attr_reader :val
+class CauterizeBuiltinFloat < CauterizeBuiltin
+  def initialize(val)
+    super(val.to_f)
+  end
 
+  def to_f
+    val
+  end
+end
+
+class CauterizeBuiltinBool < CauterizeBuiltin
+  def initialize(val)
+    super((val)? true : false)
+  end
+end
+
+
+class CauterizeScalar < CauterizeData
   def initialize(val)
     @val = self.class.builtin.construct val
+  end
+
+  def val
+    @val.val
   end
 
   def pack
@@ -51,8 +68,17 @@ class CauterizeScalar < CauterizeData
   end
 end
 
+class CauterizeArray < CauterizeData
+  def val
+    @elems.map{|e| e.val}
+  end
 
-class CauterizeFixedArray < CauterizeData
+  def to_s
+    val.to_a.pack("C*")
+  end
+end
+
+class CauterizeFixedArray < CauterizeArray
   attr_reader :elems
 
   def initialize(elems)
@@ -70,7 +96,7 @@ class CauterizeFixedArray < CauterizeData
 end
 
 
-class CauterizeVariableArray < CauterizeData
+class CauterizeVariableArray < CauterizeArray
   attr_reader :length
   attr_reader :elems
 
@@ -78,6 +104,10 @@ class CauterizeVariableArray < CauterizeData
     @elems = elems.map { |e| self.class.elem_type.construct(e) }
     @length = self.class.size_type.new @elems.length
     raise "Invalid length" if @elems.length > self.class.max_length
+  end
+
+  def val
+    @elems.map{|e| e.val}
   end
 
   def pack
@@ -102,6 +132,10 @@ class CauterizeComposite < CauterizeData
     @fields = Hash[field_values.map do |field_name, value|
       [field_name, self.class.fields[field_name].construct(value)]
     end]
+  end
+
+  def val
+    Hash[@fields.map{|name, value| [name, value.val]}]
   end
 
   def pack
@@ -134,6 +168,10 @@ class CauterizeEnumeration < CauterizeData
     @field_name = field_name
   end
 
+  def val
+    @field_name
+  end
+
   def val() self.class.fields[@field_name] end
 
   def pack
@@ -146,7 +184,7 @@ class CauterizeEnumeration < CauterizeData
   end
 
   def self.unpackio(str)
-    self.from_int(self.repr_type.unpackio(str))
+    self.from_int(self.repr_type.unpackio(str).to_i)
   end
 end
 
@@ -155,23 +193,37 @@ class CauterizeGroup < CauterizeData
   attr_reader :tag
   attr_reader :data
 
-  def to_tag_name(field_name)
-    (self.class.tag_prefix + field_name.to_s).to_sym
+  def val
+    if data.nil?
+      { tag: tag_field_name }
+    else
+      { tag: tag_field_name,
+        data: data.val }
+    end
   end
 
-  def self.from_field_name(tag_name)
+  def tag_field_name
+    self.class.from_tag_field_name(@tag.field_name)
+  end
+
+  def self.tag_from_field_name(field_name)
+    self.tag_type.construct((self.tag_prefix + field_name.to_s).to_sym)
+  end
+
+  def self.from_tag_field_name(tag_name)
     t = tag_name.to_s
     t.slice!(self.tag_prefix)
     t.to_sym
   end
   
-  def initialize(tag, data = nil)
-    @tag = self.class.tag_type.construct(to_tag_name(tag))
-    field_class = self.class.fields[self.class.from_field_name(@tag.field_name)]
+  def initialize(h)
+    @tag = self.class.tag_from_field_name(h[:tag])
+
+    field_class = self.class.fields[tag_field_name]
     if field_class.nil?
-      @data = data
+      @data = nil
     else
-      @data = field_class.construct(data)
+      @data = field_class.construct(h[:data])
     end
   end
 
@@ -185,12 +237,12 @@ class CauterizeGroup < CauterizeData
 
   def self.unpackio(str)
     tag = self.tag_type.unpackio(str)
-    field_name = self.from_field_name(tag.field_name)
-    data = self.fields[field_name]
-    if data.nil?
-      self.new(field_name)
+    field_name = self.from_tag_field_name(tag.field_name)
+    data_type = self.fields[field_name]
+    if data_type.nil?
+      self.new({ tag: field_name })
     else
-      self.new(field_name, data.unpackio(str))
+      self.new({ tag: field_name, data: data_type.unpackio(str) })
     end
   end
 end

@@ -1,6 +1,6 @@
 require_relative './cauterize_ruby_baseclasses'
 
-class UInt8 < CauterizeBuiltin
+class UInt8 < CauterizeBuiltinInteger
   def in_range(v) v >= 0 && v < 2**8 end
   def pack
     [val.to_i].pack("C")
@@ -10,7 +10,7 @@ class UInt8 < CauterizeBuiltin
   end
 end
 
-class UInt16 < CauterizeBuiltin
+class UInt16 < CauterizeBuiltinInteger
   def in_range(v) v >= 0 && v < 2**16 end
   def pack
     [val.to_i].pack("S")
@@ -20,7 +20,7 @@ class UInt16 < CauterizeBuiltin
   end
 end
 
-class UInt32 < CauterizeBuiltin
+class UInt32 < CauterizeBuiltinInteger
   def in_range(v) v >= 0 && v < 2**32 end
   def pack
     [val.to_i].pack("L")
@@ -30,7 +30,7 @@ class UInt32 < CauterizeBuiltin
   end
 end
 
-class UInt64 < CauterizeBuiltin
+class UInt64 < CauterizeBuiltinInteger
   def in_range(v) v >= 0 && v < 2**64 end
   def pack
     [val.to_i].pack("Q")
@@ -40,7 +40,7 @@ class UInt64 < CauterizeBuiltin
   end
 end
 
-class Int8 < CauterizeBuiltin
+class Int8 < CauterizeBuiltinInteger
   def in_range(v) (v >= -2**7) && (v < 2**7) end
   def pack
     [val.to_i].pack("c")
@@ -50,7 +50,7 @@ class Int8 < CauterizeBuiltin
   end
 end
 
-class Int16 < CauterizeBuiltin
+class Int16 < CauterizeBuiltinInteger
   def in_range(v) (v >= -2**15) && (v < 2**15) end
   def pack
     [val.to_i].pack("s")
@@ -60,7 +60,7 @@ class Int16 < CauterizeBuiltin
   end
 end
 
-class Int32 < CauterizeBuiltin
+class Int32 < CauterizeBuiltinInteger
   def in_range(v) (v >= -2**31) && (v < 2**31) end
   def pack
     [val.to_i].pack("l")
@@ -70,7 +70,7 @@ class Int32 < CauterizeBuiltin
   end
 end
 
-class Int64 < CauterizeBuiltin
+class Int64 < CauterizeBuiltinInteger
   def in_range(v) (v >= -2**63) && (v < 2**63) end
   def pack
     [val.to_i].pack("q")
@@ -80,7 +80,7 @@ class Int64 < CauterizeBuiltin
   end
 end
 
-class Bool < CauterizeBuiltin
+class Bool < CauterizeBuiltinBool
   def in_range(v) true end
   def pack
     if @val
@@ -98,7 +98,7 @@ class Bool < CauterizeBuiltin
   end
 end
 
-class Float32 < CauterizeBuiltin
+class Float32 < CauterizeBuiltinFloat
   def in_range(v) v > (-3.402823466e38) && v < (3.402823466e38) end
   def pack
     [val.to_f].pack("f")
@@ -108,7 +108,7 @@ class Float32 < CauterizeBuiltin
   end
 end
 
-class Float64 < CauterizeBuiltin
+class Float64 < CauterizeBuiltinFloat
   def in_range(v) true end
   def pack
     [val.to_f].pack("d")
