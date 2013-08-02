@@ -16,10 +16,12 @@ class CauterizeData
 end
 
 class CauterizeBuiltin < CauterizeData
-  attr_reader :val
   def initialize(val)
     raise "Out of range value" if not in_range(val)
     @val = val
+  end
+  def to_ruby
+    @val
   end
 end
 
@@ -29,7 +31,7 @@ class CauterizeBuiltinInteger < CauterizeBuiltin
   end
 
   def to_i
-    val
+    @val
   end
 end
 
@@ -39,7 +41,7 @@ class CauterizeBuiltinFloat < CauterizeBuiltin
   end
 
   def to_f
-    val
+    @val
   end
 end
 
@@ -55,8 +57,8 @@ class CauterizeScalar < CauterizeData
     @val = self.class.builtin.construct val
   end
 
-  def val
-    @val.val
+  def to_ruby
+    @val.to_ruby
   end
 
   def pack
@@ -69,12 +71,12 @@ class CauterizeScalar < CauterizeData
 end
 
 class CauterizeArray < CauterizeData
-  def val
-    @elems.map{|e| e.val}
+  def to_ruby
+    @elems.map{|e| e.to_ruby}
   end
 
-  def to_s
-    val.to_a.pack("C*")
+  def to_string
+    to_ruby.to_a.pack("C*")
   end
 end
 
@@ -106,17 +108,13 @@ class CauterizeVariableArray < CauterizeArray
     raise "Invalid length" if @elems.length > self.class.max_length
   end
 
-  def val
-    @elems.map{|e| e.val}
-  end
-
   def pack
     @length.pack + @elems.inject("") { |sum, n| sum + n.pack }
   end
 
   def self.unpackio(str)
     length = self.size_type.unpackio(str)
-    self.new (1..length.val).map { self.elem_type.unpackio(str) }
+    self.new (1..length.to_i).map { self.elem_type.unpackio(str) }
   end
 end
 
@@ -134,8 +132,8 @@ class CauterizeComposite < CauterizeData
     end]
   end
 
-  def val
-    Hash[@fields.map{|name, value| [name, value.val]}]
+  def to_ruby
+    Hash[@fields.map{|name, value| [name, value.to_ruby]}]
   end
 
   def pack
@@ -168,11 +166,11 @@ class CauterizeEnumeration < CauterizeData
     @field_name = field_name
   end
 
-  def val
+  def to_ruby
     @field_name
   end
 
-  def val() self.class.fields[@field_name] end
+  def to_i() self.class.fields[@field_name] end
 
   def pack
     self.class.repr_type.construct(self.class.fields[@field_name]).pack
@@ -193,12 +191,12 @@ class CauterizeGroup < CauterizeData
   attr_reader :tag
   attr_reader :data
 
-  def val
+  def to_ruby
     if data.nil?
       { tag: tag_field_name }
     else
       { tag: tag_field_name,
-        data: data.val }
+        data: data.to_ruby }
     end
   end
 
