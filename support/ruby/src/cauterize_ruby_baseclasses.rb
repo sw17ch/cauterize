@@ -123,12 +123,13 @@ class CauterizeComposite < CauterizeData
   attr_reader :fields
 
   def initialize(field_values)
-    missing_keys = self.class.fields.keys - field_values.keys
-    extra_keys = field_values.keys - self.class.fields.keys
+    field_defs = self.class.fields
+    missing_keys = field_defs.keys - field_values.keys
+    extra_keys = field_values.keys - field_defs.keys
     raise "missing fields #{missing_keys}" if not missing_keys.empty?
     raise "extra fields #{extra_keys}" if not extra_keys.empty?
-    @fields = Hash[field_values.map do |field_name, value|
-      [field_name, self.class.fields[field_name].construct(value)]
+    @fields = Hash[field_defs.map do |field_name, field_def|
+      [field_name, field_def.construct(field_values[field_name])]
     end]
   end
 
