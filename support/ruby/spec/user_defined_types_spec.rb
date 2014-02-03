@@ -1,6 +1,5 @@
 require 'tmpdir'
 require 'fileutils'
-require 'pry'
 
 require_relative '../src/cauterize_ruby_builtins'
 
@@ -151,67 +150,6 @@ module Cauterize
         end
         
       EOF
-=begin
-variable_array(:uint8_buffer) do |a|
-  a.size_type  :uint8
-  a.array_type :uint8
-  a.array_size 128
-end
-
-
-enumeration(:large_value) do |e|
-  e.value :negative, -500
-  e.value :positive, 500
-end
-
-fixed_array(:color_list) do |a|
-  a.array_type :color
-  a.array_size 41
-end
-
-composite(:weirdness) do |c|
-  c.field :val, :large_value
-  c.field :num, :int8
-end
- 
-fixed_array(:color_list_list) do |a|
-  a.array_type :color_list
-  a.array_size 4
-end
- 
-variable_array(:numbers) do |a|
-  a.size_type  :usmallint
-  a.array_type :bigint
-  a.array_size 128
-end
-
-composite(:nonsensical) do |c|
-  c.field :color, :color
-  c.field :color_list, :color_list
-  c.field :numbers, :numbers
-  c.field :a_float, :float64
-  c.field :a_bool, :bool
-end
-
-composite(:crazy) do |c|
-  c.field :first_numbers, :numbers
-  c.field :second_numbers, :numbers
-  c.field :third_numbers, :numbers
-end
-
-group(:insanity) do |g|
-  g.field :nonsensical, :nonsensical
-  g.field :crazy, :crazy
-  g.dataless :any_empty_entry
-  g.dataless :another_empty
-end
-
-group(:wat) do |g|
-  g.field :arrrr, :color_list_list
-  g.field :coooo, :color
-  g.dataless :ohnoes
-end
-=end
     end
   end # describe user types
 end # Cauterize module
